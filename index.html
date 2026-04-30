@@ -785,6 +785,10 @@ function abrirModalAgregar(){
 }
 
 function cerrarAdminModal(e){
+
+  //SOLO cerrar si clickeaste el fondo (overlay)
+  if(e.target.id !== 'admin-modal') return;
+
   document.getElementById('admin-modal').classList.remove('active');
 
   productoEditando = null;
