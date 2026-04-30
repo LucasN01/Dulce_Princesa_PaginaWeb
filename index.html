@@ -202,8 +202,21 @@
   .admin-badge span.dot-live{width:8px;height:8px;border-radius:50%;background:#ff6b6b;display:inline-block;animation:pulse 1.5s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
   .admin-actions{display:flex;gap:10px}
-  .btn-admin-add{padding:9px 22px;background:var(--rose-deep);color:white;border:none;font-family:'Jost';font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background .2s}
-  .btn-admin-add:hover{background:#C07080}
+  .btn-admin-add{
+    padding:10px 16px;
+    background:#C07080;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:bold;
+    display:inline-block;
+  }
+
+  .btn-admin-add:hover{
+    background:#a85a68;
+  }
   .btn-admin-reset{padding:9px 22px;background:transparent;color:var(--rose-mid);border:1px solid rgba(212,132,154,0.4);font-family:'Jost';font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s}
   .btn-admin-reset:hover{background:rgba(212,132,154,0.1);color:var(--rose)}
   .admin-bar-active body,.admin-bar-active nav{padding-top:44px}
