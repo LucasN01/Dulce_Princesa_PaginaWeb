@@ -625,10 +625,7 @@ const ADMIN_REQUEST = params.has('admin');
 
 let ADMIN_MODE = false;
 
-if(localStorage.getItem('admin') === 'true'){
-  ADMIN_MODE = true;
-  document.body.classList.add('admin');
-}else if(ADMIN_REQUEST){
+if(ADMIN_REQUEST){
   pedirLoginAdmin();
 }
 
@@ -660,7 +657,6 @@ function pedirLoginAdmin(){
 
   if(user === "NaiLoza" && pass === "nachu18082001"){
     ADMIN_MODE = true;
-    localStorage.setItem('admin','true');
     document.body.classList.add('admin');
   }else{
     alert("Credenciales incorrectas");
@@ -669,7 +665,6 @@ function pedirLoginAdmin(){
 
 
 function logoutAdmin(){
-  localStorage.removeItem('admin');
   location.reload();
 }
 
