@@ -189,14 +189,24 @@
   @keyframes scrollAnim{0%,100%{opacity:0.3;transform:scaleY(0.5) translateY(-50%)}50%{opacity:1;transform:scaleY(1) translateY(0)}}
 
   /* ADMIN */
+  /* OCULTA por defecto */
   .admin-bar{
-    display:flex !important;
+    display:none;
+    justify-content:space-between;
+    align-items:center;
     position:fixed;
     top:0;
     left:0;
-    width:100%;
-    z-index:9999;
-    background:red;
+    right:0;
+    padding:10px 16px;
+    background:#2a1218;
+    z-index:1000;
+    border-bottom:1px solid rgba(242,196,206,0.3);
+  }
+
+  /* SOLO visible en modo admin */
+  body.admin .admin-bar{
+    display:flex;
   }
   .admin-badge{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--rose);font-family:'Jost',sans-serif}
   .admin-badge span.dot-live{width:8px;height:8px;border-radius:50%;background:#ff6b6b;display:inline-block;animation:pulse 1.5s ease-in-out infinite}
