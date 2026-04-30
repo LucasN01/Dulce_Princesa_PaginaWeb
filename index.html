@@ -574,6 +574,9 @@ const productosDefault = [
 let productos = [];
 let posActual = 0;
 const ADMIN_MODE = new URLSearchParams(location.search).has('admin');
+if(ADMIN_MODE){
+  document.body.classList.add('admin');
+}
 
 // ════════════════════════════════════════════════════════
 //  FIREBASE: cargar y guardar
