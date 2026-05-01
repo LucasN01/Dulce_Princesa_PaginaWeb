@@ -14,12 +14,8 @@
     --rose:#F2C4CE;--rose-deep:#D4849A;--rose-soft:#FAF0F2;--rose-mid:#E8A0B0;
     --cream:#FDF8F5;--text:#3A2328;--text-soft:#7A5560;--gold:#C9A96E;
     --white:#ffffff;
-  }5
+  }
   body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
-  
-
-
-
 
 
   /* NAV */
@@ -562,6 +558,10 @@
     <div class="admin-field">
       <label>Categoría *</label>
       <select id="a-tipo">
+        <div class="admin-field">
+          <label>Nueva categoría</label>
+          <input type="text" id="a-nueva-cat" placeholder="Ej: Cupcakes">
+        </div>
         <option value="">— Seleccioná una categoría —</option>
         <option value="Tortas">Tortas</option>
         <option value="Tartas">Tartas</option>
@@ -851,11 +851,30 @@ function crearSeccionCarrusel(cat, catId, showDivider){
 function buildTrack(catId, prods){
   const track = document.getElementById('carrusel-track-' + catId);
   if(!track || !prods.length) return;
+
   const visible = visiblePorPantalla();
 
   carruselProds[catId] = prods;
   track.innerHTML = '';
 
+  //FIX: pocos productos → no usar carrusel infinito
+  if(prods.length <= visible){
+
+    prods.forEach(p => {
+      track.appendChild(crearCard(p, false));
+    });
+
+    // ocultar flechas
+    const prev = document.getElementById('btn-prev-' + catId);
+    const next = document.getElementById('btn-next-' + catId);
+
+    if(prev) prev.style.display = 'none';
+    if(next) next.style.display = 'none';
+
+    return;
+  }
+
+  // 🔁 Carrusel infinito normal
   prods.slice(-visible).forEach(p => track.appendChild(crearCard(p, true)));
   prods.forEach(p => track.appendChild(crearCard(p, false)));
   prods.slice(0, visible).forEach(p => track.appendChild(crearCard(p, true)));
@@ -898,6 +917,31 @@ function crearCard(p, esClonado){
   }
 
   card.addEventListener('click', () => openModal(p));
+
+
+  // 👉 BOTONES ADMIN (solo si no es clon)
+  if(ADMIN_MODE && !esClon){
+
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'admin-delete-btn';
+    btnDelete.innerText = '×';
+    btnDelete.onclick = (e) => {
+      e.stopPropagation();
+      eliminarProducto(p);
+    };
+
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'admin-edit-btn';
+    btnEdit.innerText = '✎';
+    btnEdit.onclick = (e) => {
+      e.stopPropagation();
+      editarProducto(p);
+    };
+
+    card.appendChild(btnDelete);
+    card.appendChild(btnEdit);
+  }
+
   return card;
 }
 
@@ -979,6 +1023,21 @@ function abrirModalAgregar(){
   document.getElementById('a-desc').value   = '';
   document.querySelector('.admin-modal h2').textContent = 'Nuevo producto';
   document.getElementById('admin-modal').classList.add('active');
+  cargarCategoriasEnSelect();
+}
+
+function cargarCategoriasEnSelect(){
+  const select = document.getElementById('a-tipo');
+  const cats = getCategorias();
+
+  select.innerHTML = `<option value="">— Seleccioná una categoría —</option>`;
+
+  cats.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
 }
 
 function cerrarAdminModal(e){
@@ -1028,7 +1087,16 @@ function comprimirImagen(file, callback){
 
 async function guardarProducto(){
   const nombre = document.getElementById('a-nombre').value.trim();
-  const tipo   = document.getElementById('a-tipo').value;
+  let tipo = document.getElementById('a-tipo').value;
+  const nuevaCat = document.getElementById('a-nueva-cat').value.trim();
+  //si escribe nueva categoría, tiene prioridad
+  if(nuevaCat){
+    tipo = nuevaCat;
+  }
+  if(!tipo){
+    alert("Seleccioná o creá una categoría");
+    return;
+  }
   const desc   = document.getElementById('a-desc').value.trim();
 
   if(!nombre)    { alert('Por favor ingresá el nombre del producto.'); return; }
