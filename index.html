@@ -300,6 +300,25 @@
   /* Toast */
   .admin-toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:#3A2328;color:white;padding:12px 28px;border-radius:30px;font-size:13px;letter-spacing:1px;opacity:0;pointer-events:none;transition:all .4s;z-index:400;white-space:nowrap}
   .admin-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Modal Reordenar */
+  .reorder-modal-overlay{position:fixed;inset:0;background:rgba(42,18,24,0.75);z-index:300;display:none;align-items:center;justify-content:center;padding:2rem}
+  .reorder-modal-overlay.active{display:flex}
+  .reorder-modal{background:var(--white);width:100%;max-width:560px;border-radius:6px;padding:2.5rem;position:relative;max-height:90vh;display:flex;flex-direction:column}
+  .reorder-modal h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--text);margin-bottom:0.3rem}
+  .reorder-modal .a-subtitle{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--rose-deep);margin-bottom:1.5rem}
+  .reorder-list{list-style:none;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+  .reorder-item{display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid var(--rose-mid);border-radius:4px;background:var(--rose-soft);cursor:grab;user-select:none;transition:box-shadow .2s,opacity .2s,border-color .2s}
+  .reorder-item:active{cursor:grabbing}
+  .reorder-item.dragging{opacity:0.4;border-color:var(--rose-deep)}
+  .reorder-item.drag-over{box-shadow:0 0 0 2px var(--rose-deep);border-color:var(--rose-deep);background:#fce8ee}
+  .reorder-handle{font-size:18px;color:var(--rose-deep);line-height:1;flex-shrink:0;opacity:0.6}
+  .reorder-thumb{width:48px;height:48px;object-fit:cover;border-radius:3px;flex-shrink:0;border:1px solid var(--rose-mid)}
+  .reorder-info{flex:1;min-width:0}
+  .reorder-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .reorder-tipo{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--rose-deep)}
+  .reorder-num{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--rose-mid);flex-shrink:0;width:24px;text-align:center}
+  .reorder-modal-btns{display:flex;gap:10px;margin-top:1.5rem}
   
   /* RESPONSIVE */
   @media(max-width:768px){
@@ -509,6 +528,7 @@
   </div>
   <div class="admin-actions">
     <button class="btn-admin-add" onclick="abrirModalAgregar()">+ Agregar producto</button>
+    <button class="btn-admin-reset" onclick="abrirModalReorden()">⇅ Reordenar</button>
     <button class="btn-admin-reset" onclick="resetearProductos()">↺ Restaurar originales</button>
     <button onclick="logoutAdmin()">Salir</button>
   </div>
@@ -555,6 +575,20 @@
     <div class="admin-modal-btns">
       <button class="btn-cancelar" onclick="document.getElementById('admin-modal').classList.remove('active')">Cancelar</button>
       <button class="btn-guardar" onclick="guardarProducto()">Guardar producto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REORDENAR (admin) -->
+<div class="reorder-modal-overlay" id="reorder-modal" onclick="cerrarModalReorden(event)">
+  <div class="reorder-modal">
+    <button class="admin-close" onclick="document.getElementById('reorder-modal').classList.remove('active')">✕</button>
+    <h2>Reordenar productos</h2>
+    <p class="a-subtitle">Arrastrá las tarjetas para cambiar el orden</p>
+    <ul class="reorder-list" id="reorder-list"></ul>
+    <div class="reorder-modal-btns">
+      <button class="btn-cancelar" onclick="document.getElementById('reorder-modal').classList.remove('active')">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarReorden()">Guardar orden</button>
     </div>
   </div>
 </div>
@@ -977,8 +1011,82 @@ async function resetearProductos(){
 }
 
 // ════════════════════════════════════════════════════════
-//  Toast
+//  ADMIN — Reordenar productos
 // ════════════════════════════════════════════════════════
+let ordenTemporal = [];
+let dragSrcIndex  = null;
+
+function abrirModalReorden(){
+  ordenTemporal = productos.map(p => p); // copia superficial con refs
+  renderizarListaReorden();
+  document.getElementById('reorder-modal').classList.add('active');
+}
+
+function cerrarModalReorden(e){
+  if(e.target.id !== 'reorder-modal') return;
+  document.getElementById('reorder-modal').classList.remove('active');
+}
+
+function renderizarListaReorden(){
+  const lista = document.getElementById('reorder-list');
+  lista.innerHTML = '';
+
+  ordenTemporal.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.className = 'reorder-item';
+    li.draggable = true;
+    li.dataset.index = i;
+
+    li.innerHTML = `
+      <span class="reorder-handle">⠿</span>
+      <span class="reorder-num">${i + 1}</span>
+      <img class="reorder-thumb" src="${p.img}" alt="${p.nombre}">
+      <div class="reorder-info">
+        <div class="reorder-name">${p.nombre}</div>
+        <div class="reorder-tipo">${p.tipo}</div>
+      </div>`;
+
+    // Drag events
+    li.addEventListener('dragstart', e => {
+      dragSrcIndex = parseInt(li.dataset.index);
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+      lista.querySelectorAll('.reorder-item').forEach(el => el.classList.remove('drag-over'));
+    });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      lista.querySelectorAll('.reorder-item').forEach(el => el.classList.remove('drag-over'));
+      li.classList.add('drag-over');
+    });
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      const destIndex = parseInt(li.dataset.index);
+      if(dragSrcIndex === null || dragSrcIndex === destIndex) return;
+      const [moved] = ordenTemporal.splice(dragSrcIndex, 1);
+      ordenTemporal.splice(destIndex, 0, moved);
+      dragSrcIndex = null;
+      renderizarListaReorden();
+    });
+
+    lista.appendChild(li);
+  });
+}
+
+async function guardarReorden(){
+  productos = ordenTemporal;
+  posActual = 0;
+  buildCarrusel();
+  document.getElementById('reorder-modal').classList.remove('active');
+  mostrarToast('Guardando orden…');
+  await guardarEnFirebase();
+  mostrarToast('Orden guardado ✓');
+}
+
+
 function mostrarToast(msg){
   const t = document.getElementById('admin-toast');
   t.textContent = msg;
