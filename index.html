@@ -320,6 +320,29 @@
   .reorder-num{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--rose-mid);flex-shrink:0;width:24px;text-align:center}
   .reorder-modal-btns{display:flex;gap:10px;margin-top:1.5rem}
   
+  /* Multi-carousel sections */
+  .cat-section { }
+  .cat-divider { width:100%;height:1px;background:var(--rose-mid);opacity:0.35;margin:3.5rem 0 3rem }
+  .cat-section-header { margin-bottom:1.5rem }
+  .cat-label { font-size:13px;letter-spacing:4px;color:var(--rose-deep) }
+
+  /* Modal Categorías */
+  .cat-modal-overlay{position:fixed;inset:0;background:rgba(42,18,24,0.75);z-index:300;display:none;align-items:center;justify-content:center;padding:2rem}
+  .cat-modal-overlay.active{display:flex}
+  .cat-modal{background:var(--white);width:100%;max-width:480px;border-radius:6px;padding:2.5rem;position:relative;max-height:90vh;overflow-y:auto}
+  .cat-modal h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--text);margin-bottom:0.3rem}
+  .cat-modal .a-subtitle{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--rose-deep);margin-bottom:2rem}
+  .cat-toggle-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--rose-soft)}
+  .cat-toggle-item:last-child{border-bottom:none}
+  .cat-toggle-name{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text)}
+  .cat-toggle-count{font-size:11px;color:var(--text-soft);letter-spacing:1px;margin-top:2px}
+  .toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+  .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+  .toggle-slider{position:absolute;inset:0;background:#ddd;border-radius:24px;cursor:pointer;transition:background .3s}
+  .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+  .toggle-switch input:checked + .toggle-slider{background:var(--rose-deep)}
+  .toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
+
   /* RESPONSIVE */
   @media(max-width:768px){
     .about-grid,.contacto-grid{grid-template-columns:1fr}
@@ -420,21 +443,11 @@
         <h2 class="section-title">Nuestras creaciones</h2>
       </div>
     </div>
-    <div class="carrusel-wrapper">
-      <button class="carrusel-btn prev" id="btn-prev" onclick="moverCarrusel(-1)" style="display:none">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div class="carrusel-track-outer">
-        <div id="carrusel-loading" class="carrusel-loading">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="carrusel-track" id="carrusel-track" style="display:none"></div>
+    <div id="carrousels-container">
+      <div id="carrusel-loading" class="carrusel-loading">
+        <span></span><span></span><span></span>
       </div>
-      <button class="carrusel-btn next" id="btn-next" onclick="moverCarrusel(1)" style="display:none">
-        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
     </div>
-    <div class="carrusel-dots" id="carrusel-dots"></div>
   </div>
 </section>
 
@@ -529,6 +542,7 @@
   <div class="admin-actions">
     <button class="btn-admin-add" onclick="abrirModalAgregar()">+ Agregar producto</button>
     <button class="btn-admin-reset" onclick="abrirModalReorden()">⇅ Reordenar</button>
+    <button class="btn-admin-reset" onclick="abrirModalCategorias()">👁 Categorías</button>
     <button class="btn-admin-reset" onclick="resetearProductos()">↺ Restaurar originales</button>
     <button onclick="logoutAdmin()">Salir</button>
   </div>
@@ -585,10 +599,28 @@
     <button class="admin-close" onclick="document.getElementById('reorder-modal').classList.remove('active')">✕</button>
     <h2>Reordenar productos</h2>
     <p class="a-subtitle">Arrastrá las tarjetas para cambiar el orden</p>
+    <div class="admin-field" style="margin-bottom:1.4rem">
+      <label>Categoría</label>
+      <select id="reorder-cat-select" onchange="cambiarCatReorden()"></select>
+    </div>
     <ul class="reorder-list" id="reorder-list"></ul>
     <div class="reorder-modal-btns">
       <button class="btn-cancelar" onclick="document.getElementById('reorder-modal').classList.remove('active')">Cancelar</button>
       <button class="btn-guardar" onclick="guardarReorden()">Guardar orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CATEGORÍAS (admin) -->
+<div class="cat-modal-overlay" id="cat-modal" onclick="cerrarModalCategorias(event)">
+  <div class="cat-modal">
+    <button class="admin-close" onclick="document.getElementById('cat-modal').classList.remove('active')">✕</button>
+    <h2>Categorías visibles</h2>
+    <p class="a-subtitle">Elegí cuáles mostrar en la página</p>
+    <div id="cat-toggle-list"></div>
+    <div class="reorder-modal-btns" style="margin-top:2rem">
+      <button class="btn-cancelar" onclick="document.getElementById('cat-modal').classList.remove('active')">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarCategorias()">Guardar</button>
     </div>
   </div>
 </div>
@@ -598,7 +630,7 @@
 
 <script>
 // ════════════════════════════════════════════════════════
-//  CONFIGURACIÓN FIREBASE  ← Reemplazá estos valores
+//  CONFIGURACIÓN FIREBASE
 // ════════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyDNUQ0Kz_vjlPzG3ChnWIFFeKOPziIcz1c",
@@ -653,111 +685,183 @@ const productosDefault = [
 //  ESTADO GLOBAL
 // ════════════════════════════════════════════════════════
 let productos = [];
-let posActual = 0;
+let posCarrusel = {};       // { catId: posicion }
+let carruselProds = {};     // { catId: [productos del carrusel] }
+let categoriasOcultas = []; // nombres de categorías ocultas
+
 const params = new URLSearchParams(location.search);
 const ADMIN_REQUEST = params.has('admin');
-
 let ADMIN_MODE = false;
 
-if(ADMIN_REQUEST){
-  pedirLoginAdmin();
-}
+if(ADMIN_REQUEST){ pedirLoginAdmin(); }
 
 // ════════════════════════════════════════════════════════
 //  FIREBASE: cargar y guardar
 // ════════════════════════════════════════════════════════
 async function cargarDesdeFirebase(){
   const snap = await DOC_REF.get();
-  if(snap.exists && snap.data().lista && snap.data().lista.length > 0){
-    return snap.data().lista;
+  if(snap.exists){
+    const data = snap.data();
+    if(data.lista && data.lista.length > 0){
+      categoriasOcultas = Array.isArray(data.categoriasOcultas) ? data.categoriasOcultas : [];
+      return data.lista;
+    }
   }
-  // Primera vez: guardar los defaults en Firebase
-  await DOC_REF.set({ lista: productosDefault });
+  await DOC_REF.set({ lista: productosDefault, categoriasOcultas: [] });
   return productosDefault.map(p => ({...p}));
 }
 
 async function guardarEnFirebase(){
-  await DOC_REF.set({ lista: productos });
+  await DOC_REF.set({ lista: productos, categoriasOcultas });
 }
 
 // ════════════════════════════════════════════════════════
-//  INICIO
+//  LOGIN
 // ════════════════════════════════════════════════════════
-
 function pedirLoginAdmin(){
-
   const user = prompt("Usuario:");
   const pass = prompt("Contraseña:");
-
   if(user === "NaiLoza" && pass === "nachu18082001"){
     ADMIN_MODE = true;
     document.body.classList.add('admin');
-  }else{
+  } else {
     alert("Credenciales incorrectas");
   }
 }
 
+function logoutAdmin(){ location.reload(); }
 
-function logoutAdmin(){
-  location.reload();
-}
-
+// ════════════════════════════════════════════════════════
+//  INICIALIZAR
+// ════════════════════════════════════════════════════════
 async function inicializar(){
   if(ADMIN_MODE){
     document.body.classList.add('admin-mode');
     document.getElementById('admin-bar').style.display = 'flex';
   }
-
-  try{
+  try {
     productos = await cargarDesdeFirebase();
   } catch(err){
     console.error('Error cargando Firebase:', err);
     productos = productosDefault.map(p => ({...p}));
   }
-
-  // Mostrar carrusel
   document.getElementById('carrusel-loading').style.display = 'none';
-  document.getElementById('carrusel-track').style.display   = 'flex';
-  document.getElementById('btn-prev').style.display = '';
-  document.getElementById('btn-next').style.display = '';
-
-  buildCarrusel();
-
-  // Touch swipe
-  const track = document.getElementById('carrusel-track');
-  let touchStartX = 0;
-  track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
-  track.addEventListener('touchend',   e => {
-    const diff = touchStartX - e.changedTouches[0].clientX;
-    if(Math.abs(diff) > 40) moverCarrusel(diff > 0 ? 1 : -1);
-  });
+  buildAllCarousels();
 }
 
 document.addEventListener('DOMContentLoaded', inicializar);
-window.addEventListener('resize', () => buildCarrusel());
+window.addEventListener('resize', () => buildAllCarousels());
 
 // ════════════════════════════════════════════════════════
-//  CARRUSEL
+//  HELPERS
 // ════════════════════════════════════════════════════════
+function getCatId(cat){
+  return 'cat-' + cat.toLowerCase()
+    .replace(/[áàâä]/g,'a').replace(/[éèêë]/g,'e')
+    .replace(/[íìîï]/g,'i').replace(/[óòôö]/g,'o')
+    .replace(/[úùûü]/g,'u').replace(/ñ/g,'n')
+    .replace(/[^a-z0-9]/g,'-');
+}
+
+function getCategorias(){
+  return [...new Set(productos.map(p => p.tipo))];
+}
+
 function visiblePorPantalla(){
   if(window.innerWidth <= 768)  return 1;
   if(window.innerWidth <= 1024) return 2;
   return 3;
 }
 
-function buildCarrusel(){
-  const track = document.getElementById('carrusel-track');
-  if(!track || !productos.length) return;
+// ════════════════════════════════════════════════════════
+//  CARRUSELES — Construir todos
+// ════════════════════════════════════════════════════════
+function buildAllCarousels(){
+  const container = document.getElementById('carrousels-container');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const cats = getCategorias();
+  const visibles = cats.filter(c => !categoriasOcultas.includes(c));
+  const toInit = [];
+
+  visibles.forEach((cat, idx) => {
+    const prods = productos.filter(p => p.tipo === cat);
+    if(!prods.length) return;
+    const catId = getCatId(cat);
+    const section = crearSeccionCarrusel(cat, catId, idx > 0);
+    container.appendChild(section);
+    toInit.push({ catId, prods: [...prods] });
+  });
+
+  // "Todos los productos" al final
+  if(productos.length > 0){
+    const section = crearSeccionCarrusel('Todos los productos', 'todos', visibles.length > 0);
+    container.appendChild(section);
+    toInit.push({ catId: 'todos', prods: [...productos] });
+  }
+
+  // Ahora que están en el DOM, construir los tracks
+  toInit.forEach(({ catId, prods }) => {
+    buildTrack(catId, prods);
+    // Touch swipe
+    const track = document.getElementById('carrusel-track-' + catId);
+    if(!track) return;
+    let startX = 0;
+    track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+    track.addEventListener('touchend', e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if(Math.abs(diff) > 40) moverCarrusel(catId, diff > 0 ? 1 : -1);
+    });
+  });
+}
+
+function crearSeccionCarrusel(cat, catId, showDivider){
+  const section = document.createElement('div');
+  section.className = 'cat-section';
+  section.id = 'section-' + catId;
+
+  if(showDivider){
+    const d = document.createElement('div');
+    d.className = 'cat-divider';
+    section.appendChild(d);
+  }
+
+  const header = document.createElement('div');
+  header.className = 'cat-section-header';
+  header.innerHTML = `<span class="section-label cat-label">${cat}</span>`;
+  section.appendChild(header);
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'carrusel-wrapper';
+  wrapper.innerHTML = `
+    <button class="carrusel-btn prev" id="btn-prev-${catId}" onclick="moverCarrusel('${catId}',-1)">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="carrusel-track-outer">
+      <div class="carrusel-track" id="carrusel-track-${catId}"></div>
+    </div>
+    <button class="carrusel-btn next" id="btn-next-${catId}" onclick="moverCarrusel('${catId}',1)">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+  section.appendChild(wrapper);
+  return section;
+}
+
+function buildTrack(catId, prods){
+  const track = document.getElementById('carrusel-track-' + catId);
+  if(!track || !prods.length) return;
   const visible = visiblePorPantalla();
 
+  carruselProds[catId] = prods;
   track.innerHTML = '';
 
-  productos.slice(-visible).forEach(p => track.appendChild(crearCard(p, true)));
-  productos.forEach(p => track.appendChild(crearCard(p, false)));
-  productos.slice(0, visible).forEach(p => track.appendChild(crearCard(p, true)));
+  prods.slice(-visible).forEach(p => track.appendChild(crearCard(p, true)));
+  prods.forEach(p => track.appendChild(crearCard(p, false)));
+  prods.slice(0, visible).forEach(p => track.appendChild(crearCard(p, true)));
 
-  posActual = visible;
-  actualizarCarrusel(false);
+  posCarrusel[catId] = visible;
+  actualizarCarrusel(catId, false);
 }
 
 function crearCard(p, esClonado){
@@ -777,55 +881,45 @@ function crearCard(p, esClonado){
     </div>`;
 
   if(ADMIN_MODE && !esClonado){
+    const btnDel = document.createElement('button');
+    btnDel.className = 'admin-delete-btn';
+    btnDel.innerHTML = '×';
+    btnDel.title = 'Eliminar producto';
+    btnDel.addEventListener('click', e => { e.stopPropagation(); eliminarProducto(p); });
+    card.appendChild(btnDel);
 
-  // BOTÓN ELIMINAR
-  const btnDel = document.createElement('button');
-  btnDel.className = 'admin-delete-btn';
-  btnDel.innerHTML = '×';
-  btnDel.title = 'Eliminar producto';
-  btnDel.addEventListener('click', e => { 
-    e.stopPropagation(); 
-    eliminarProducto(p); 
-  });
-  card.appendChild(btnDel);
-
-  // BOTÓN EDITAR
-  const btnEdit = document.createElement('button');
-  btnEdit.className = 'admin-edit-btn';
-  btnEdit.innerHTML = '✏';
-  btnEdit.title = 'Editar producto';
-  btnEdit.style.right = '50px'; // para que no se superponga con la X
-
-  btnEdit.addEventListener('click', e => {
-    e.stopPropagation();
-    abrirModalEditar(p);
-  });
-
-  card.appendChild(btnEdit);
-}
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'admin-edit-btn';
+    btnEdit.innerHTML = '✏';
+    btnEdit.title = 'Editar producto';
+    btnEdit.style.right = '50px';
+    btnEdit.addEventListener('click', e => { e.stopPropagation(); abrirModalEditar(p); });
+    card.appendChild(btnEdit);
+  }
 
   card.addEventListener('click', () => openModal(p));
   return card;
 }
 
-function actualizarCarrusel(animar = true){
-  const track = document.getElementById('carrusel-track');
-  if(!track.children.length) return;
+function actualizarCarrusel(catId, animar = true){
+  const track = document.getElementById('carrusel-track-' + catId);
+  if(!track || !track.children.length) return;
   const cardW = track.children[0].getBoundingClientRect().width;
   track.style.transition = animar ? 'transform .45s cubic-bezier(.4,0,.2,1)' : 'none';
-  track.style.transform  = `translateX(-${posActual * (cardW + 20)}px)`;
+  track.style.transform  = `translateX(-${posCarrusel[catId] * (cardW + 20)}px)`;
 }
 
-function moverCarrusel(dir){
+function moverCarrusel(catId, dir){
   const visible = visiblePorPantalla();
-  const total   = productos.length;
-  posActual += dir;
-  actualizarCarrusel(true);
+  const total   = (carruselProds[catId] || []).length;
+  posCarrusel[catId] = (posCarrusel[catId] || visible) + dir;
+  actualizarCarrusel(catId, true);
 
-  const track = document.getElementById('carrusel-track');
+  const track = document.getElementById('carrusel-track-' + catId);
+  if(!track) return;
   track.addEventListener('transitionend', () => {
-    if(posActual >= total + visible){ posActual = visible; actualizarCarrusel(false); }
-    if(posActual < visible){ posActual = total + visible - 1; actualizarCarrusel(false); }
+    if(posCarrusel[catId] >= total + visible){ posCarrusel[catId] = visible; actualizarCarrusel(catId, false); }
+    if(posCarrusel[catId] < visible){ posCarrusel[catId] = total + visible - 1; actualizarCarrusel(catId, false); }
   }, {once:true});
 }
 
@@ -866,15 +960,14 @@ async function eliminarProducto(p){
   if(!confirm(`¿Eliminar "${p.nombre}" del catálogo?`)) return;
   const idx = productos.indexOf(p);
   if(idx > -1) productos.splice(idx, 1);
-  posActual = 0;
-  buildCarrusel();
+  buildAllCarousels();
   mostrarToast('Guardando…');
   await guardarEnFirebase();
   mostrarToast('Producto eliminado ✓');
 }
 
 // ════════════════════════════════════════════════════════
-//  ADMIN — Agregar
+//  ADMIN — Agregar / Editar
 // ════════════════════════════════════════════════════════
 let fotoBase64 = null;
 let productoEditando = null;
@@ -882,34 +975,23 @@ let productoEditando = null;
 function abrirModalAgregar(){
   productoEditando = null;
   fotoBase64 = null;
-
-  document.getElementById('a-nombre').value='';
-  document.getElementById('a-desc').value='';
-
+  document.getElementById('a-nombre').value = '';
+  document.getElementById('a-desc').value   = '';
   document.querySelector('.admin-modal h2').textContent = 'Nuevo producto';
-
   document.getElementById('admin-modal').classList.add('active');
 }
 
 function cerrarAdminModal(e){
-
-  //SOLO cerrar si clickeaste el fondo (overlay)
   if(e.target.id !== 'admin-modal') return;
-
   document.getElementById('admin-modal').classList.remove('active');
-
   productoEditando = null;
   fotoBase64 = null;
-
-  document.getElementById('a-nombre').value='';
-  document.getElementById('a-desc').value='';
-
+  document.getElementById('a-nombre').value = '';
+  document.getElementById('a-desc').value   = '';
   const preview = document.getElementById('a-foto-preview');
   preview.style.display = 'none';
   preview.src = '';
-
   document.getElementById('a-foto-texto').textContent = 'Subir imagen';
-
   document.querySelector('.admin-modal h2').textContent = 'Nuevo producto';
 }
 
@@ -919,13 +1001,12 @@ function previsualizarFoto(e){
   comprimirImagen(file, base64 => {
     fotoBase64 = base64;
     const preview = document.getElementById('a-foto-preview');
-    preview.src  = fotoBase64;
+    preview.src = fotoBase64;
     preview.style.display = 'block';
     document.getElementById('a-foto-texto').textContent = file.name;
   });
 }
 
-// Comprime la imagen a max 900px y calidad 0.78 para ahorrar espacio en Firestore
 function comprimirImagen(file, callback){
   const reader = new FileReader();
   reader.onload = ev => {
@@ -956,22 +1037,19 @@ async function guardarProducto(){
   if(!fotoBase64){ alert('Por favor subí una foto del producto.'); return; }
 
   if(productoEditando){
-  productoEditando.nombre = nombre;
-  productoEditando.tipo   = tipo;
-  productoEditando.desc   = desc;
-
-  if(fotoBase64){
-    productoEditando.img = fotoBase64;
-  }
-  }else{
+    productoEditando.nombre = nombre;
+    productoEditando.tipo   = tipo;
+    productoEditando.desc   = desc;
+    if(fotoBase64) productoEditando.img = fotoBase64;
+  } else {
     productos.push({ nombre, tipo, desc, img: fotoBase64 });
   }
-  posActual = 0;
-  buildCarrusel();
+
+  buildAllCarousels();
   document.getElementById('admin-modal').classList.remove('active');
   mostrarToast('Guardando…');
   await guardarEnFirebase();
-  mostrarToast('Producto agregado ✓');
+  mostrarToast('Producto guardado ✓');
   setTimeout(() => scrollToSection('productos'), 300);
   productoEditando = null;
   document.querySelector('.admin-modal h2').textContent = 'Nuevo producto';
@@ -979,21 +1057,15 @@ async function guardarProducto(){
 
 function abrirModalEditar(p){
   productoEditando = p;
-
   document.getElementById('a-nombre').value = p.nombre;
   document.getElementById('a-tipo').value   = p.tipo;
   document.getElementById('a-desc').value   = p.desc;
-
   fotoBase64 = p.img;
-
   const preview = document.getElementById('a-foto-preview');
   preview.src = p.img;
   preview.style.display = 'block';
-
   document.getElementById('a-foto-texto').textContent = 'Imagen actual';
-
   document.querySelector('.admin-modal h2').textContent = 'Editar producto';
-
   document.getElementById('admin-modal').classList.add('active');
 }
 
@@ -1003,23 +1075,51 @@ function abrirModalEditar(p){
 async function resetearProductos(){
   if(!confirm('¿Restaurar el catálogo original? Se perderán todos los cambios.')) return;
   productos = productosDefault.map(p => ({...p}));
-  posActual = 0;
-  buildCarrusel();
+  categoriasOcultas = [];
+  buildAllCarousels();
   mostrarToast('Guardando…');
   await guardarEnFirebase();
   mostrarToast('Catálogo restaurado ✓');
 }
 
 // ════════════════════════════════════════════════════════
-//  ADMIN — Reordenar productos
+//  ADMIN — Reordenar por categoría
 // ════════════════════════════════════════════════════════
-let ordenTemporal = [];
-let dragSrcIndex  = null;
+let ordenTemporal  = [];
+let dragSrcIndex   = null;
+let reorderCatActual = null;
 
 function abrirModalReorden(){
-  ordenTemporal = productos.map(p => p); // copia superficial con refs
+  const select = document.getElementById('reorder-cat-select');
+  select.innerHTML = '';
+
+  getCategorias().forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  });
+  const optTodos = document.createElement('option');
+  optTodos.value = '__todos__';
+  optTodos.textContent = 'Todos los productos';
+  select.appendChild(optTodos);
+
+  reorderCatActual = select.value;
+  cargarOrdenTemporal();
   renderizarListaReorden();
   document.getElementById('reorder-modal').classList.add('active');
+}
+
+function cambiarCatReorden(){
+  reorderCatActual = document.getElementById('reorder-cat-select').value;
+  cargarOrdenTemporal();
+  renderizarListaReorden();
+}
+
+function cargarOrdenTemporal(){
+  ordenTemporal = reorderCatActual === '__todos__'
+    ? [...productos]
+    : productos.filter(p => p.tipo === reorderCatActual);
 }
 
 function cerrarModalReorden(e){
@@ -1036,7 +1136,6 @@ function renderizarListaReorden(){
     li.className = 'reorder-item';
     li.draggable = true;
     li.dataset.index = i;
-
     li.innerHTML = `
       <span class="reorder-handle">⠿</span>
       <span class="reorder-num">${i + 1}</span>
@@ -1046,7 +1145,6 @@ function renderizarListaReorden(){
         <div class="reorder-tipo">${p.tipo}</div>
       </div>`;
 
-    // Drag events
     li.addEventListener('dragstart', e => {
       dragSrcIndex = parseInt(li.dataset.index);
       li.classList.add('dragging');
@@ -1058,7 +1156,6 @@ function renderizarListaReorden(){
     });
     li.addEventListener('dragover', e => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
       lista.querySelectorAll('.reorder-item').forEach(el => el.classList.remove('drag-over'));
       li.classList.add('drag-over');
     });
@@ -1077,16 +1174,72 @@ function renderizarListaReorden(){
 }
 
 async function guardarReorden(){
-  productos = ordenTemporal;
-  posActual = 0;
-  buildCarrusel();
+  if(reorderCatActual === '__todos__'){
+    productos = ordenTemporal;
+  } else {
+    // Reemplazar los productos de esa categoría en su orden dentro del array global
+    let idx = 0;
+    productos = productos.map(p =>
+      p.tipo === reorderCatActual ? ordenTemporal[idx++] : p
+    );
+  }
+  buildAllCarousels();
   document.getElementById('reorder-modal').classList.remove('active');
   mostrarToast('Guardando orden…');
   await guardarEnFirebase();
   mostrarToast('Orden guardado ✓');
 }
 
+// ════════════════════════════════════════════════════════
+//  ADMIN — Visibilidad de categorías
+// ════════════════════════════════════════════════════════
+function abrirModalCategorias(){
+  renderCatToggles();
+  document.getElementById('cat-modal').classList.add('active');
+}
 
+function cerrarModalCategorias(e){
+  if(e.target.id !== 'cat-modal') return;
+  document.getElementById('cat-modal').classList.remove('active');
+}
+
+function renderCatToggles(){
+  const list = document.getElementById('cat-toggle-list');
+  list.innerHTML = '';
+  getCategorias().forEach(cat => {
+    const count = productos.filter(p => p.tipo === cat).length;
+    const visible = !categoriasOcultas.includes(cat);
+    const item = document.createElement('div');
+    item.className = 'cat-toggle-item';
+    item.innerHTML = `
+      <div>
+        <div class="cat-toggle-name">${cat}</div>
+        <div class="cat-toggle-count">${count} producto${count !== 1 ? 's' : ''}</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" data-cat="${cat}" ${visible ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>`;
+    list.appendChild(item);
+  });
+}
+
+async function guardarCategorias(){
+  const checkboxes = document.querySelectorAll('#cat-toggle-list input[type=checkbox]');
+  categoriasOcultas = [];
+  checkboxes.forEach(cb => {
+    if(!cb.checked) categoriasOcultas.push(cb.dataset.cat);
+  });
+  buildAllCarousels();
+  document.getElementById('cat-modal').classList.remove('active');
+  mostrarToast('Guardando…');
+  await guardarEnFirebase();
+  mostrarToast('Categorías actualizadas ✓');
+}
+
+// ════════════════════════════════════════════════════════
+//  Toast
+// ════════════════════════════════════════════════════════
 function mostrarToast(msg){
   const t = document.getElementById('admin-toast');
   t.textContent = msg;
