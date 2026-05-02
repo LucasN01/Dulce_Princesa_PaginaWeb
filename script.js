@@ -125,10 +125,10 @@ function applyConfig() {
 // ════════════════════════════════════════════════════════
 function applyColores(c) {
   const r = document.documentElement.style;
-  r.setProperty('--rose',      c.rose);
-  r.setProperty('--rose-deep', c.roseDeep);
-  r.setProperty('--rose-soft', c.roseSoft);
-  r.setProperty('--rose-mid',  c.roseMid);
+  r.setProperty('--fondo',      c.fondo);
+  r.setProperty('--principal', c.principal);
+  r.setProperty('--secciones', c.secciones);
+  r.setProperty('--bordes',  c.bordes);
   r.setProperty('--cream',     c.cream);
   r.setProperty('--text',      c.text);
   r.setProperty('--text-soft', c.textSoft);
