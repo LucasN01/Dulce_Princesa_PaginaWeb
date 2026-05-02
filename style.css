@@ -1,9 +1,11 @@
   *{margin:0;padding:0;box-sizing:border-box}
+
+
   :root{
-    --fondo:#CDEFF2;        /* celeste muy claro */
-    --principal:#3AA6B9;    /* azul petróleo suave */
-    --secciones:#EAF9FB;    /* fondo ultra suave */
-    --detalles:#7ED6DF;     /* celeste medio */
+    --fondo:#CDEFF2;        /* color fondo */
+    --principal:#3AA6B9;    /* color principal */
+    --secciones:#EAF9FB;    /* color para secciones */
+    --detalles:#7ED6DF;     /* color para detalles */
 
     --cream:#F7FCFD;        /* fondo general frío */
     --text:#1F3A40;         /* azul oscuro elegante */

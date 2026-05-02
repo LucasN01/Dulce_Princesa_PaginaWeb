@@ -95,7 +95,7 @@ const SITE_CONFIG = {
     fondo:     "#CDEFF2",  // celeste muy claro (fondos suaves)
     principal: "#3AA6B9",  // azul petróleo suave (principal)
     secciones: "#EAF9FB",  // fondo ultra claro (secciones)
-    bordes:  "#7ED6DF",  // intermedio (bordes, detalles)
+    detalles:  "#7ED6DF",  // intermedio (bordes, detalles)
     cream:    "#F7FCFD",  // fondo general (más frío que crema)
     text:     "#1F3A40",  // texto principal (azul oscuro elegante)
     textSoft: "#5F7C82",  // texto secundario

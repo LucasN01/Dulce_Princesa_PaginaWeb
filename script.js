@@ -128,7 +128,7 @@ function applyColores(c) {
   r.setProperty('--fondo',      c.fondo);
   r.setProperty('--principal', c.principal);
   r.setProperty('--secciones', c.secciones);
-  r.setProperty('--bordes',  c.bordes);
+  r.setProperty('--detalles',  c.detalles);
   r.setProperty('--cream',     c.cream);
   r.setProperty('--text',      c.text);
   r.setProperty('--text-soft', c.textSoft);
