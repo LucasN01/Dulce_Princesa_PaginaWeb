@@ -153,7 +153,11 @@ async function cargarDesdeFirebase(){
 }
 
 async function guardarEnFirebase(){
-  await DOC_REF.set({ lista: productos, categoriasOcultas });
+  await DOC_REF.set({
+    lista: productos,
+    categoriasOcultas,
+    adminKey: SITE_CONFIG.admin.password
+  });
 }
 
 // ════════════════════════════════════════════════════════
