@@ -92,15 +92,32 @@ const SITE_CONFIG = {
   // ── PALETA DE COLORES ──────────────────────────────────────────
   // Usá coolors.co o palettte.app para generar paletas para cada cliente
   colores: {
-    rose:     "#CDEFF2",  // celeste muy claro (fondos suaves)
-    roseDeep: "#3AA6B9",  // azul petróleo suave (principal)
-    roseSoft: "#EAF9FB",  // fondo ultra claro (secciones)
-    roseMid:  "#7ED6DF",  // intermedio (bordes, detalles)
-    cream:    "#F7FCFD",  // fondo general (más frío que crema)
-    text:     "#1F3A40",  // texto principal (azul oscuro elegante)
-    textSoft: "#5F7C82",  // texto secundario
-    gold:     "#5BC0BE",  // acento (verde agua)
-    white:    "#ffffff"
+    // ── BRAND BASE ─────────────────────────────
+    primary: "#3AA6B9",        // color principal (botones, acentos)
+    primarySoft: "#CDEFF2",    // fondos suaves
+    primaryLight: "#EAF9FB",   // secciones claras
+    secondary: "#7ED6DF",      // bordes, detalles
+
+    // ── BACKGROUNDS ───────────────────────────
+    background: "#F7FCFD",     // fondo general
+    white: "#ffffff",         // tarjetas / modales
+
+    // ── TEXT ──────────────────────────────────
+    text: "#1F3A40",          // texto principal
+    textSoft: "#5F7C82",      // texto secundario
+
+    // ── ACCENTS ───────────────────────────────
+    accent: "#5BC0BE",        // opcional (detalles)
+
+    // ── EFFECTS / UI ──────────────────────────
+    overlay: "rgba(31,58,64,0.6)",
+    overlayStrong: "rgba(31,58,64,0.7)",
+    border: "rgba(126,214,223,0.4)",
+    shadow: "rgba(0,0,0,0.08)",
+
+    // ── STATUS ────────────────────────────────
+    success: "#25D366",
+    successHover: "#1ebe5d"
   },
 
   // ── CATÁLOGO INICIAL / RESTAURACIÓN ────────────────────────────
