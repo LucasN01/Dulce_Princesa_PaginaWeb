@@ -14,8 +14,12 @@
     --rose:#F2C4CE;--rose-deep:#D4849A;--rose-soft:#FAF0F2;--rose-mid:#E8A0B0;
     --cream:#FDF8F5;--text:#3A2328;--text-soft:#7A5560;--gold:#C9A96E;
     --white:#ffffff;
-  }
+  }5
   body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
+  
+
+
+
 
 
   /* NAV */
@@ -557,11 +561,7 @@
     </div>
     <div class="admin-field">
       <label>Categoría *</label>
-      <select id="a-tipo">
-        <div class="admin-field">
-          <label>Nueva categoría</label>
-          <input type="text" id="a-nueva-cat" placeholder="Ej: Cupcakes">
-        </div>
+      <select id="a-tipo" onchange="toggleNuevaCat()">
         <option value="">— Seleccioná una categoría —</option>
         <option value="Tortas">Tortas</option>
         <option value="Tartas">Tartas</option>
@@ -570,7 +570,11 @@
         <option value="Meriendas">Meriendas</option>
         <option value="Estacionales">Estacionales</option>
         <option value="Otro">Otro</option>
+        <option value="__nueva__">＋ Agregar nueva categoría…</option>
       </select>
+      <div id="a-tipo-nueva-wrap" style="display:none;margin-top:8px">
+        <input type="text" id="a-tipo-nueva" placeholder="Nombre de la nueva categoría" style="width:100%;padding:10px 14px;border:1px solid var(--rose-mid);border-radius:2px;font-family:'Jost';font-size:14px;color:var(--text);background:var(--rose-soft);outline:none">
+      </div>
     </div>
     <div class="admin-field">
       <label>Descripción *</label>
@@ -851,30 +855,28 @@ function crearSeccionCarrusel(cat, catId, showDivider){
 function buildTrack(catId, prods){
   const track = document.getElementById('carrusel-track-' + catId);
   if(!track || !prods.length) return;
-
   const visible = visiblePorPantalla();
 
   carruselProds[catId] = prods;
   track.innerHTML = '';
 
-  //FIX: pocos productos → no usar carrusel infinito
+  const btnPrev = document.getElementById('btn-prev-' + catId);
+  const btnNext = document.getElementById('btn-next-' + catId);
+
+  // Si hay ≤ productos que los slots visibles, mostrar estático sin clonar
   if(prods.length <= visible){
-
-    prods.forEach(p => {
-      track.appendChild(crearCard(p, false));
-    });
-
-    // ocultar flechas
-    const prev = document.getElementById('btn-prev-' + catId);
-    const next = document.getElementById('btn-next-' + catId);
-
-    if(prev) prev.style.display = 'none';
-    if(next) next.style.display = 'none';
-
+    prods.forEach(p => track.appendChild(crearCard(p, false)));
+    posCarrusel[catId] = 0;
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0)';
+    if(btnPrev) btnPrev.style.display = 'none';
+    if(btnNext) btnNext.style.display = 'none';
     return;
   }
 
-  // 🔁 Carrusel infinito normal
+  if(btnPrev) btnPrev.style.display = '';
+  if(btnNext) btnNext.style.display = '';
+
   prods.slice(-visible).forEach(p => track.appendChild(crearCard(p, true)));
   prods.forEach(p => track.appendChild(crearCard(p, false)));
   prods.slice(0, visible).forEach(p => track.appendChild(crearCard(p, true)));
@@ -917,31 +919,6 @@ function crearCard(p, esClonado){
   }
 
   card.addEventListener('click', () => openModal(p));
-
-
-  // 👉 BOTONES ADMIN (solo si no es clon)
-  if(ADMIN_MODE && !esClon){
-
-    const btnDelete = document.createElement('button');
-    btnDelete.className = 'admin-delete-btn';
-    btnDelete.innerText = '×';
-    btnDelete.onclick = (e) => {
-      e.stopPropagation();
-      eliminarProducto(p);
-    };
-
-    const btnEdit = document.createElement('button');
-    btnEdit.className = 'admin-edit-btn';
-    btnEdit.innerText = '✎';
-    btnEdit.onclick = (e) => {
-      e.stopPropagation();
-      editarProducto(p);
-    };
-
-    card.appendChild(btnDelete);
-    card.appendChild(btnEdit);
-  }
-
   return card;
 }
 
@@ -955,7 +932,9 @@ function actualizarCarrusel(catId, animar = true){
 
 function moverCarrusel(catId, dir){
   const visible = visiblePorPantalla();
-  const total   = (carruselProds[catId] || []).length;
+  const prods = carruselProds[catId] || [];
+  const total  = prods.length;
+  if(total <= visible) return; // estático, sin scroll
   posCarrusel[catId] = (posCarrusel[catId] || visible) + dir;
   actualizarCarrusel(catId, true);
 
@@ -1021,23 +1000,9 @@ function abrirModalAgregar(){
   fotoBase64 = null;
   document.getElementById('a-nombre').value = '';
   document.getElementById('a-desc').value   = '';
+  poblarSelectTipo('');
   document.querySelector('.admin-modal h2').textContent = 'Nuevo producto';
   document.getElementById('admin-modal').classList.add('active');
-  cargarCategoriasEnSelect();
-}
-
-function cargarCategoriasEnSelect(){
-  const select = document.getElementById('a-tipo');
-  const cats = getCategorias();
-
-  select.innerHTML = `<option value="">— Seleccioná una categoría —</option>`;
-
-  cats.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
-  });
 }
 
 function cerrarAdminModal(e){
@@ -1047,6 +1012,8 @@ function cerrarAdminModal(e){
   fotoBase64 = null;
   document.getElementById('a-nombre').value = '';
   document.getElementById('a-desc').value   = '';
+  document.getElementById('a-tipo-nueva').value = '';
+  document.getElementById('a-tipo-nueva-wrap').style.display = 'none';
   const preview = document.getElementById('a-foto-preview');
   preview.style.display = 'none';
   preview.src = '';
@@ -1085,19 +1052,54 @@ function comprimirImagen(file, callback){
   reader.readAsDataURL(file);
 }
 
+// Mostrar/ocultar input de nueva categoría
+function toggleNuevaCat(){
+  const sel = document.getElementById('a-tipo');
+  const wrap = document.getElementById('a-tipo-nueva-wrap');
+  const input = document.getElementById('a-tipo-nueva');
+  if(sel.value === '__nueva__'){
+    wrap.style.display = 'block';
+    input.focus();
+  } else {
+    wrap.style.display = 'none';
+    input.value = '';
+  }
+}
+
+// Poblar el select con las categorías existentes (incluyendo las creadas)
+function poblarSelectTipo(valorActual){
+  const sel = document.getElementById('a-tipo');
+  const opcionesFijas = ['Tortas','Tartas','Clásicos','Panadería','Meriendas','Estacionales','Otro'];
+  const existentes = getCategorias();
+  const extras = existentes.filter(c => !opcionesFijas.includes(c));
+
+  sel.innerHTML = `<option value="">— Seleccioná una categoría —</option>`;
+  [...opcionesFijas, ...extras].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+  const optNueva = document.createElement('option');
+  optNueva.value = '__nueva__';
+  optNueva.textContent = '＋ Agregar nueva categoría…';
+  sel.appendChild(optNueva);
+
+  if(valorActual) sel.value = valorActual;
+  document.getElementById('a-tipo-nueva-wrap').style.display = 'none';
+  document.getElementById('a-tipo-nueva').value = '';
+}
+
 async function guardarProducto(){
   const nombre = document.getElementById('a-nombre').value.trim();
-  let tipo = document.getElementById('a-tipo').value;
-  const nuevaCat = document.getElementById('a-nueva-cat').value.trim();
-  //si escribe nueva categoría, tiene prioridad
-  if(nuevaCat){
-    tipo = nuevaCat;
-  }
-  if(!tipo){
-    alert("Seleccioná o creá una categoría");
-    return;
-  }
+  let   tipo   = document.getElementById('a-tipo').value;
   const desc   = document.getElementById('a-desc').value.trim();
+
+  // Resolver nueva categoría
+  if(tipo === '__nueva__'){
+    tipo = document.getElementById('a-tipo-nueva').value.trim();
+    if(!tipo){ alert('Por favor escribí el nombre de la nueva categoría.'); return; }
+  }
 
   if(!nombre)    { alert('Por favor ingresá el nombre del producto.'); return; }
   if(!tipo)      { alert('Por favor seleccioná una categoría.'); return; }
@@ -1126,7 +1128,7 @@ async function guardarProducto(){
 function abrirModalEditar(p){
   productoEditando = p;
   document.getElementById('a-nombre').value = p.nombre;
-  document.getElementById('a-tipo').value   = p.tipo;
+  poblarSelectTipo(p.tipo);
   document.getElementById('a-desc').value   = p.desc;
   fotoBase64 = p.img;
   const preview = document.getElementById('a-foto-preview');
